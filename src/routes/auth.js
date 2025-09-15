@@ -5,6 +5,20 @@ import db from '../config/database.js';
 
 const router = express.Router();
 
+// CORS test endpoint
+router.get('/cors-test', (req, res) => {
+  console.log('CORS test endpoint hit');
+  console.log('Origin header:', req.get('Origin'));
+  console.log('Access-Control-Request-Method header:', req.get('Access-Control-Request-Method'));
+  console.log('Access-Control-Request-Headers header:', req.get('Access-Control-Request-Headers'));
+  
+  res.json({ 
+    message: 'CORS test successful',
+    timestamp: new Date().toISOString(),
+    origin: req.get('Origin') || 'No origin header'
+  });
+});
+
 // Debug route to check if auth routes are working
 router.get('/test', (req, res) => {
   res.json({ 
