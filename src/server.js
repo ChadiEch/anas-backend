@@ -26,36 +26,37 @@ console.log('Loading .env from:', envPath);
 dotenv.config({ path: envPath });
 console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
 
-const app = express();
 // Use Railway's PORT or default to 5000
 const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
+console.log('Using port:', PORT);
+
+const app = express();
+
+// Log all incoming requests for debugging
+app.use((req, res, next) => {
+  console.log(`Incoming request: ${req.method} ${req.url}`);
+  console.log('Headers:', req.headers);
+  next();
+});
 
 // Security middleware
 app.use(helmet());
 
-// Comprehensive CORS middleware with extensive logging
+// Manual CORS middleware for maximum compatibility
 app.use((req, res, next) => {
-  console.log('=== CORS Middleware ===');
-  console.log('Request Method:', req.method);
-  console.log('Request Origin:', req.get('Origin'));
-  console.log('Request Headers:', req.headers);
-  
-  // Set CORS headers
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Credentials', true);
+  console.log('Setting CORS headers for origin:', req.get('Origin'));
+  res.header('Access-Control-Allow-Origin', req.get('Origin') || '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override');
-  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling OPTIONS request');
-    res.status(200).end();
-    return;
+    res.sendStatus(200);
+  } else {
+    next();
   }
-  
-  console.log('Continuing with request');
-  next();
 });
 
 // File upload middleware
@@ -91,6 +92,7 @@ app.use('/api/contact', contactRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  console.log('Health check endpoint hit');
   res.json({ 
     status: 'OK', 
     message: 'CAD Craft Hub API is running',
@@ -103,6 +105,7 @@ app.get('/api/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
+  console.log('Root endpoint hit');
   res.json({ 
     message: 'Welcome to CAD Craft Hub API',
     version: '1.0.0',
@@ -131,6 +134,7 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
+  console.log('404 handler hit for:', req.originalUrl);
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
