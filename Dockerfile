@@ -2,7 +2,10 @@
 FROM node:18-alpine
 
 # Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ py3-pip
+
+# Install setuptools for distutils
+RUN pip3 install setuptools
 
 # Create app directory
 WORKDIR /app
@@ -10,12 +13,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies and rebuild sqlite3 for current platform
+# Install dependencies
 RUN npm install
-RUN npm rebuild sqlite3 --runtime=node --target=$(node -v) --target_platform=linux --target_arch=x64
-
-# Copy source code
-COPY . .
 
 # Expose port
 EXPOSE 5000
