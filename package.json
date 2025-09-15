@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
+    "prebuild": "npm install",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "init-db": "node src/scripts/initDatabase.js",
@@ -19,7 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "helmet": "^7.1.0",
     "express-rate-limit": "^7.1.5",
-    "express-fileupload": "^1.4.0"
+    "express-fileupload": "^1.5.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
