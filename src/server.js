@@ -33,13 +33,51 @@ const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// CORS configuration - allow Railway deployment
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://your-production-domain.com'] 
-    : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080'],
-  credentials: true
-}));
+// Enhanced CORS configuration for Railway deployment
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      'http://localhost:8080',
+      'http://localhost:3000',
+      'http://127.0.0.1:8080',
+      'https://anas-frontend-production.up.railway.app'
+    ];
+    
+    // Add Railway internal domains
+    if (process.env.RAILWAY_ENVIRONMENT) {
+      allowedOrigins.push(
+        'https://*.railway.app',
+        'http://*.railway.internal',
+        process.env.RAILWAY_GIT_COMMIT_REF ? 
+          `https://${process.env.RAILWAY_GIT_COMMIT_REF}-*.up.railway.app` : 
+          null
+      );
+    }
+    
+    // Add custom frontend URL if provided
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+    
+    // Check if origin is allowed
+    if (allowedOrigins.some(allowedOrigin => 
+        origin === allowedOrigin || 
+        (allowedOrigin && allowedOrigin.includes('*') && 
+         origin.match(allowedOrigin.replace('*', '.*'))))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // File upload middleware
 app.use(fileUpload({
@@ -78,7 +116,9 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     message: 'CAD Craft Hub API is running',
     timestamp: new Date().toISOString(),
-    port: PORT
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    railway: !!process.env.RAILWAY_ENVIRONMENT
   });
 });
 
@@ -103,6 +143,9 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ error: 'CORS not allowed' });
+  }
   res.status(err.status || 500).json({
     error: process.env.NODE_ENV === 'production' 
       ? 'Internal server error' 
@@ -120,4 +163,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CAD Craft Hub API server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚂 Railway Environment: ${!!process.env.RAILWAY_ENVIRONMENT}`);
 });

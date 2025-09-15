@@ -5,6 +5,14 @@ import db from '../config/database.js';
 
 const router = express.Router();
 
+// Middleware to log all requests for debugging
+router.use((req, res, next) => {
+  console.log(`Auth Route: ${req.method} ${req.originalUrl}`);
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+  next();
+});
+
 // Login route
 router.post('/login', async (req, res) => {
   try {
@@ -21,12 +29,14 @@ router.post('/login', async (req, res) => {
     );
 
     if (!user) {
+      console.log('User not found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check password
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -41,6 +51,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    console.log('Login successful for user:', email);
     res.json({
       message: 'Login successful',
       token,
@@ -94,6 +105,11 @@ router.get('/verify', async (req, res) => {
     console.error('Token verification error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+// Debug route to check if auth routes are working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Auth routes are working correctly' });
 });
 
 export default router;
