@@ -33,18 +33,29 @@ const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// Manual CORS middleware for maximum compatibility
+// Comprehensive CORS middleware with extensive logging
 app.use((req, res, next) => {
+  console.log('=== CORS Middleware ===');
+  console.log('Request Method:', req.method);
+  console.log('Request Origin:', req.get('Origin'));
+  console.log('Request Headers:', req.headers);
+  
+  // Set CORS headers
   res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
+    console.log('Handling OPTIONS request');
+    res.status(200).end();
+    return;
   }
+  
+  console.log('Continuing with request');
+  next();
 });
 
 // File upload middleware
