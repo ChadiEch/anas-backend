@@ -30,29 +30,14 @@ const app = express();
 // Use Railway's PORT or default to 5000
 const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 
-// Security middleware
+// Security middleware - keeping helmet for other security features
 app.use(helmet());
 
-// Configure CORS with specific options
-const corsOptions = {
-  origin: [
-    'https://anas-frontend-production.up.railway.app',
-    'https://anas-frontend.up.railway.app',
-    'http://localhost:8080',
-    'http://localhost:3000'
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-};
-
-// Apply CORS middleware to all routes
-app.use(cors(corsOptions));
+// Simple CORS - allow all origins
+app.use(cors());
 
 // Handle preflight requests for all routes
-app.options('*', cors(corsOptions));
+app.options('*', cors());
 
 // File upload middleware
 app.use(fileUpload({
