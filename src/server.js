@@ -33,32 +33,26 @@ const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// Explicit OPTIONS handler for all routes - MUST be before other middleware
-app.options('*', (req, res) => {
-  console.log('=== Handling OPTIONS request ===');
-  console.log('Origin:', req.get('Origin'));
-  console.log('Headers:', req.headers);
-  
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Max-Age', '86400');
-  res.status(200).send();
-});
+// Configure CORS with specific options
+const corsOptions = {
+  origin: [
+    'https://anas-frontend-production.up.railway.app',
+    'https://anas-frontend.up.railway.app',
+    'http://localhost:8080',
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+};
 
-// Comprehensive CORS middleware
-app.use((req, res, next) => {
-  console.log('=== CORS Middleware ===');
-  console.log('Method:', req.method);
-  console.log('Origin:', req.get('Origin'));
-  
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  next();
-});
+// Apply CORS middleware to all routes
+app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
 
 // File upload middleware
 app.use(fileUpload({
@@ -93,7 +87,6 @@ app.use('/api/contact', contactRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
   res.json({ 
     status: 'OK', 
     message: 'CAD Craft Hub API is running',
@@ -106,7 +99,6 @@ app.get('/api/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
   res.json({ 
     message: 'Welcome to CAD Craft Hub API',
     version: '1.0.0',
@@ -126,7 +118,6 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  res.header('Access-Control-Allow-Origin', '*');
   res.status(err.status || 500).json({
     error: process.env.NODE_ENV === 'production' 
       ? 'Internal server error' 
@@ -136,7 +127,6 @@ app.use((err, req, res, next) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', '*');
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
