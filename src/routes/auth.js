@@ -5,12 +5,12 @@ import db from '../config/database.js';
 
 const router = express.Router();
 
-// Middleware to log all requests for debugging
-router.use((req, res, next) => {
-  console.log(`Auth Route: ${req.method} ${req.originalUrl}`);
-  console.log('Request body:', req.body);
-  console.log('Request headers:', req.headers);
-  next();
+// Debug route to check if auth routes are working
+router.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Auth routes are working correctly',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Login route
@@ -105,11 +105,6 @@ router.get('/verify', async (req, res) => {
     console.error('Token verification error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
-
-// Debug route to check if auth routes are working
-router.get('/test', (req, res) => {
-  res.json({ message: 'Auth routes are working correctly' });
 });
 
 export default router;

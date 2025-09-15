@@ -44,7 +44,8 @@ const corsOptions = {
       'http://localhost:8080',
       'http://localhost:3000',
       'http://127.0.0.1:8080',
-      'https://anas-frontend-production.up.railway.app'
+      'https://anas-frontend-production.up.railway.app',
+      'https://anas-frontend.up.railway.app'
     ];
     
     // Add Railway internal domains
@@ -63,21 +64,34 @@ const corsOptions = {
       allowedOrigins.push(process.env.FRONTEND_URL);
     }
     
+    // Always allow the backend URL itself for internal requests
+    allowedOrigins.push(`https://anas-backend.up.railway.app`);
+    
     // Check if origin is allowed
     if (allowedOrigins.some(allowedOrigin => 
         origin === allowedOrigin || 
         (allowedOrigin && allowedOrigin.includes('*') && 
-         origin.match(allowedOrigin.replace('*', '.*'))))) {
+         origin.match(new RegExp(allowedOrigin.replace('*', '.*')))))) {
+      console.log('CORS allowed for origin:', origin);
       callback(null, true);
     } else {
+      console.log('CORS blocked for origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
+// Apply CORS middleware before any routes
 app.use(cors(corsOptions));
+
+// Handle preflight requests for all routes
+app.options('*', cors(corsOptions));
 
 // File upload middleware
 app.use(fileUpload({
