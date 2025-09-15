@@ -33,65 +33,16 @@ const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// Enhanced CORS configuration for Railway deployment
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // List of allowed origins
-    const allowedOrigins = [
-      'http://localhost:8080',
-      'http://localhost:3000',
-      'http://127.0.0.1:8080',
-      'https://anas-frontend-production.up.railway.app',
-      'https://anas-frontend.up.railway.app'
-    ];
-    
-    // Add Railway internal domains
-    if (process.env.RAILWAY_ENVIRONMENT) {
-      allowedOrigins.push(
-        'https://*.railway.app',
-        'http://*.railway.internal',
-        process.env.RAILWAY_GIT_COMMIT_REF ? 
-          `https://${process.env.RAILWAY_GIT_COMMIT_REF}-*.up.railway.app` : 
-          null
-      );
-    }
-    
-    // Add custom frontend URL if provided
-    if (process.env.FRONTEND_URL) {
-      allowedOrigins.push(process.env.FRONTEND_URL);
-    }
-    
-    // Always allow the backend URL itself for internal requests
-    allowedOrigins.push(`https://anas-backend.up.railway.app`);
-    
-    // Check if origin is allowed
-    if (allowedOrigins.some(allowedOrigin => 
-        origin === allowedOrigin || 
-        (allowedOrigin && allowedOrigin.includes('*') && 
-         origin.match(new RegExp(allowedOrigin.replace('*', '.*')))))) {
-      console.log('CORS allowed for origin:', origin);
-      callback(null, true);
-    } else {
-      console.log('CORS blocked for origin:', origin);
-      console.log('Allowed origins:', allowedOrigins);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// Simple and permissive CORS configuration for Railway deployment
+// This will allow all origins for testing purposes
+app.use(cors({
+  origin: true, // Reflects the request origin
   credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range']
-};
-
-// Apply CORS middleware before any routes
-app.use(cors(corsOptions));
+  optionsSuccessStatus: 200
+}));
 
 // Handle preflight requests for all routes
-app.options('*', cors(corsOptions));
+app.options('*', cors());
 
 // File upload middleware
 app.use(fileUpload({
@@ -157,9 +108,6 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  if (err.message === 'Not allowed by CORS') {
-    return res.status(403).json({ error: 'CORS not allowed' });
-  }
   res.status(err.status || 500).json({
     error: process.env.NODE_ENV === 'production' 
       ? 'Internal server error' 
