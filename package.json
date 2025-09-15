@@ -9,7 +9,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "init-db": "node src/scripts/initDatabase.js",
-    "build": "echo 'Build completed'"
+    "build": "echo 'Build completed'",
+    "postinstall": "npm rebuild sqlite3 --runtime=node --target=$(node -v) --target_platform=linux --target_arch=x64"
   },
   "dependencies": {
     "express": "^4.18.2",

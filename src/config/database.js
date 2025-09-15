@@ -9,8 +9,12 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Use Railway's volume mount for database or fallback to local directory
+const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH 
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'database.sqlite')
+  : path.join(__dirname, '..', '..', 'database.sqlite');
+
 // Create SQLite database
-const dbPath = path.join(__dirname, '..', '..', 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 
 // Promisify database methods for async/await

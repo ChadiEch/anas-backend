@@ -1,0 +1,5 @@
+{
+  "project": "cad-craft-hub-backend",
+  "service": "backend",
+  "environment": "production"
+}
