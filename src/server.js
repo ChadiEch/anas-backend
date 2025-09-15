@@ -1,0 +1,120 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import dotenv from 'dotenv';
+import fileUpload from 'express-fileupload';
+
+// Import routes
+import authRoutes from './routes/auth.js';
+import projectRoutes from './routes/projects.js';
+import technologyRoutes from './routes/technologies.js';
+import aboutRoutes from './routes/about.js';
+import homepageRoutes from './routes/homepage.js';
+import contactRoutes from './routes/contact.js';
+
+// Load environment variables
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load .env from backend directory
+const envPath = path.join(__dirname, '..', '.env');
+console.log('Loading .env from:', envPath);
+dotenv.config({ path: envPath });
+console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-production-domain.com'] 
+    : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080'],
+  credentials: true
+}));
+
+// File upload middleware
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  createParentPath: true
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api', limiter);
+
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/technologies', technologyRoutes);
+app.use('/api/about', aboutRoutes);
+app.use('/api/homepage', homepageRoutes);
+app.use('/api/contact', contactRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'CAD Craft Hub API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Welcome to CAD Craft Hub API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      projects: '/api/projects',
+      technologies: '/api/technologies',
+      about: '/api/about',
+      homepage: '/api/homepage',
+      contact: '/api/contact',
+      health: '/api/health'
+    }
+  });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 CAD Craft Hub API server running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
