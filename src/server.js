@@ -27,15 +27,16 @@ dotenv.config({ path: envPath });
 console.log('JWT_SECRET loaded:', !!process.env.JWT_SECRET);
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+// Use Railway's PORT or default to 5000
+const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 
 // Security middleware
 app.use(helmet());
 
-// CORS configuration
+// CORS configuration - allow Railway deployment
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-production-domain.com'] 
+    ? [process.env.FRONTEND_URL || 'https://your-production-domain.com'] 
     : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080'],
   credentials: true
 }));
@@ -76,7 +77,8 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'CAD Craft Hub API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    port: PORT
   });
 });
 
@@ -85,6 +87,7 @@ app.get('/', (req, res) => {
   res.json({ 
     message: 'Welcome to CAD Craft Hub API',
     version: '1.0.0',
+    port: PORT,
     endpoints: {
       auth: '/api/auth',
       projects: '/api/projects',
@@ -113,7 +116,7 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CAD Craft Hub API server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
