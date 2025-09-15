@@ -5,20 +5,6 @@ import db from '../config/database.js';
 
 const router = express.Router();
 
-// CORS test endpoint
-router.get('/cors-test', (req, res) => {
-  console.log('CORS test endpoint hit');
-  console.log('Origin header:', req.get('Origin'));
-  console.log('Access-Control-Request-Method header:', req.get('Access-Control-Request-Method'));
-  console.log('Access-Control-Request-Headers header:', req.get('Access-Control-Request-Headers'));
-  
-  res.json({ 
-    message: 'CORS test successful',
-    timestamp: new Date().toISOString(),
-    origin: req.get('Origin') || 'No origin header'
-  });
-});
-
 // Debug route to check if auth routes are working
 router.get('/test', (req, res) => {
   res.json({ 
@@ -27,12 +13,17 @@ router.get('/test', (req, res) => {
   });
 });
 
-// Login route
+// Login route with extensive logging
 router.post('/login', async (req, res) => {
   try {
+    console.log('=== Login Request ===');
+    console.log('Request Body:', req.body);
+    console.log('Request Headers:', req.headers);
+    
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
@@ -66,6 +57,11 @@ router.post('/login', async (req, res) => {
     );
 
     console.log('Login successful for user:', email);
+    
+    // Add CORS headers to response
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', true);
+    
     res.json({
       message: 'Login successful',
       token,
@@ -104,6 +100,10 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
+    // Add CORS headers to response
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', true);
+    
     res.json({
       valid: true,
       user: user
