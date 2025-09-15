@@ -1,11 +1,8 @@
-# Use Node.js 18 alpine image
-FROM node:18-alpine
+# Use Node.js 18 slim image (Debian-based) instead of Alpine for better native module support
+FROM node:18-slim
 
 # Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++ py3-pip
-
-# Install setuptools for distutils
-RUN pip3 install setuptools
+RUN apt-get update && apt-get install -y python3 build-essential pkg-config && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
 WORKDIR /app
@@ -15,6 +12,9 @@ COPY package*.json ./
 
 # Install dependencies
 RUN npm install
+
+# Copy source code
+COPY . .
 
 # Expose port
 EXPOSE 5000
