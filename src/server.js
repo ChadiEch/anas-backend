@@ -30,10 +30,10 @@ const app = express();
 // Use Railway's PORT or default to 5000
 const PORT = process.env.RAILWAY_PORT || process.env.PORT || 5000;
 
-// Security middleware - keeping helmet for other security features
+// Security middleware
 app.use(helmet());
 
-// Simple CORS - allow all origins
+// Completely permissive CORS - allows all origins
 app.use(cors());
 
 // Handle preflight requests for all routes
