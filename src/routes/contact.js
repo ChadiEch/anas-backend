@@ -75,12 +75,13 @@ router.post('/submit', async (req, res) => {
       return res.status(400).json({ error: 'Name, email, and message are required' });
     }
 
-    const result = await db.runAsync(`
+    await db.runAsync(`
       INSERT INTO contact_submissions (name, email, phone, message)
       VALUES (?, ?, ?, ?)
     `, [name, email, phone, message]);
 
-    const submission = await db.getAsync('SELECT * FROM contact_submissions WHERE id = ?', [result.lastID]);
+    // Get the created submission using the lastID from the database instance
+    const submission = await db.getAsync('SELECT * FROM contact_submissions WHERE id = last_insert_rowid()');
 
     res.status(201).json({
       message: 'Contact form submitted successfully',
@@ -135,11 +136,14 @@ router.delete('/submissions/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await db.runAsync('DELETE FROM contact_submissions WHERE id = ?', [id]);
-
-    if (result.changes === 0) {
+    // First check if contact submission exists
+    const existingSubmission = await db.getAsync('SELECT id FROM contact_submissions WHERE id = ?', [id]);
+    if (!existingSubmission) {
       return res.status(404).json({ error: 'Contact submission not found' });
     }
+
+    // Delete the contact submission
+    await db.runAsync('DELETE FROM contact_submissions WHERE id = ?', [id]);
 
     res.json({ message: 'Contact submission deleted successfully' });
   } catch (error) {

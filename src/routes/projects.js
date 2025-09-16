@@ -130,11 +130,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await db.runAsync('DELETE FROM projects WHERE id = ?', [id]);
-
-    if (result.changes === 0) {
+    // First check if project exists
+    const existingProject = await db.getAsync('SELECT id FROM projects WHERE id = ?', [id]);
+    if (!existingProject) {
       return res.status(404).json({ error: 'Project not found' });
     }
+
+    // Delete the project
+    await db.runAsync('DELETE FROM projects WHERE id = ?', [id]);
 
     res.json({ message: 'Project deleted successfully', id: id });
   } catch (error) {

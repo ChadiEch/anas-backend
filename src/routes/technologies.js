@@ -101,11 +101,14 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await db.runAsync('DELETE FROM technologies WHERE id = ?', [id]);
-
-    if (result.changes === 0) {
+    // First check if technology exists
+    const existingTech = await db.getAsync('SELECT id FROM technologies WHERE id = ?', [id]);
+    if (!existingTech) {
       return res.status(404).json({ error: 'Technology not found' });
     }
+
+    // Delete the technology
+    await db.runAsync('DELETE FROM technologies WHERE id = ?', [id]);
 
     res.json({ message: 'Technology deleted successfully', id: id });
   } catch (error) {
