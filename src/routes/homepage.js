@@ -110,15 +110,26 @@ router.post('/upload-cv', authenticateToken, async (req, res) => {
         
         result = await db.getAsync('SELECT * FROM homepage_settings WHERE id = ?', [existingResult.id]);
       } else {
+        // Create a new record with just the CV file path
         const insertResult = await db.runAsync(`
-          INSERT INTO homepage_settings (cv_file_path)
-          VALUES (?)
-        `, ['/cv.pdf']);
+          INSERT INTO homepage_settings (cv_file_path, banner_title, banner_subtitle, banner_description)
+          VALUES (?, ?, ?, ?)
+        `, [
+          '/cv.pdf',
+          'Mechanical Engineer',
+          'Designing innovative solutions with precision and creativity',
+          'Experienced in CAD design, 3D modeling, and engineering analysis using AutoCAD, SolidWorks, Revit, and cutting-edge engineering tools.'
+        ]);
         
         result = await db.getAsync('SELECT * FROM homepage_settings WHERE id = ?', [insertResult.lastID]);
       }
 
-      res.json({ message: 'CV uploaded successfully', cv_url: '/cv.pdf', ...result });
+      // Return the expected format for the frontend
+      res.json({ 
+        message: 'CV uploaded successfully', 
+        cv_url: '/cv.pdf',
+        ...result 
+      });
     } catch (dbError) {
       console.error('Error updating database with CV path:', dbError);
       res.status(500).json({ error: 'Failed to update database' });
