@@ -3,7 +3,7 @@ const https = require('https');
 
 // Test options request
 const options = {
-  hostname: 'anas-backend.up.railway.app',
+  hostname: 'anas-backend-production.up.railway.app',
   port: 443,
   path: '/api/auth/cors-test',
   method: 'OPTIONS',
