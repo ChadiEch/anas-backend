@@ -39,8 +39,12 @@ router.put('/', authenticateToken, async (req, res) => {
   try {
     const { content, skills, experience_years } = req.body;
 
-    // First, check if about record exists
-    const existingResult = await db.getAsync('SELECT id FROM about LIMIT 1');
+    // First, check if about record exists - get the same record as GET endpoint
+    const existingResult = await db.getAsync(`
+      SELECT id FROM about
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
 
     let result;
     const skillsJson = skills ? JSON.stringify(skills) : null;
@@ -97,7 +101,11 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Check if about record already exists
-    const existingResult = await db.getAsync('SELECT id FROM about LIMIT 1');
+    const existingResult = await db.getAsync(`
+      SELECT id FROM about
+      ORDER BY created_at DESC
+      LIMIT 1
+    `);
     
     if (existingResult) {
       return res.status(409).json({ error: 'About information already exists. Use PUT to update.' });
