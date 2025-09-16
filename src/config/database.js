@@ -17,8 +17,24 @@ const dbPath = process.env.RAILWAY_VOLUME_MOUNT_PATH
 // Create SQLite database
 const db = new sqlite3.Database(dbPath);
 
-// Promisify database methods for async/await
-db.runAsync = promisify(db.run.bind(db));
+// Custom promisify for run method to capture lastID and changes
+db.runAsync = function(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    const stmt = this.run(sql, params, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        // 'this' context contains lastID and changes
+        resolve({
+          lastID: this.lastID,
+          changes: this.changes
+        });
+      }
+    });
+  });
+};
+
+// Promisify get and all methods
 db.getAsync = promisify(db.get.bind(db));
 db.allAsync = promisify(db.all.bind(db));
 
